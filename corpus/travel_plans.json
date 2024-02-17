@@ -1,0 +1,22 @@
+{
+  "trip": {
+    "destination": "Bermuda",
+    "flight": {
+      "airline": "ABC Airlines",
+      "flightNumber": "ABC123",
+      "departureAirport": "JFK",
+      "arrivalAirport": "BDA",
+      "departureTime": "2022-10-01T10:00:00",
+      "arrivalTime": "2022-10-01T14:00:00"
+    },
+    "transit": {
+      "mode": "Taxi",
+      "pickupLocation": "BDA Airport",
+      "dropoffLocation": "Hotel XYZ"
+    },
+    "hotel": {
+      "name": "Hotel XYZ",
+      "address": "123 Main Street, Bermuda"
+    }
+  }
+}
