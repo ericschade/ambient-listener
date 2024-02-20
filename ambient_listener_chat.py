@@ -1,6 +1,7 @@
 import autogen
 from autogen.agentchat.contrib.retrieve_assistant_agent import RetrieveAssistantAgent
 from autogen.agentchat.contrib.retrieve_user_proxy_agent import RetrieveUserProxyAgent
+from ambient_retrieve_user_proxy import AmbientRetrieveUserProxy
 import chromadb
 import os
 import datetime
@@ -75,7 +76,7 @@ def main():
         llm_config=llm_config,
     )
     
-    ragproxyagent = RetrieveUserProxyAgent(
+    ragproxyagent = AmbientRetrieveUserProxy(
         name="ragproxyagent",
         is_termination_msg=termination_msg,
         human_input_mode="ALWAYS",
