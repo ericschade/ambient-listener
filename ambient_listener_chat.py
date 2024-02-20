@@ -90,6 +90,7 @@ def main():
             "client": chromadb.PersistentClient(path="c:/Users/erics/OneDrive/Documents/GitHub/ambient-listener/tmp/chromadb"),
             "embedding_model": "all-mpnet-base-v2",
             "get_or_create": True,  # set to False if you don't want to reuse an existing collection, but you'll need to remove the collection manually
+            "update_context": False # do not request additional context from the user
         },
         code_execution_config={
                 "work_dir": "/",
