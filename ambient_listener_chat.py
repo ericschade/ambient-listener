@@ -49,12 +49,23 @@ def main():
     current_date = now.strftime("%Y-%m-%d")
     current_time = now.strftime("%H:%M:%S")
 
-    current_location = "the San Diego airport"
+    current_location = "the mall"
+    ambient_listen_message = """
+    Attention all passengers, the flight to Bermuda has been delayed by 2 hours.
+      We apologize for the inconvenience. Please check the monitors for updates.
+      """
+
+    initiating_message = f"""
+    It is {current_time} on {current_date} and I am at {current_location}. I just heard an announcement over a loudspeaker saying the following:
 
 
-    message = f"""
-    It is {current_time} on {current_date} and I am at {current_location}. I just heard an announcement over the loudspeaker saying the following:
-    Attention all passengers, the flight to New York City has been delayed by 2 hours. We apologize for the inconvenience. Please check the monitors for updates.
+    {ambient_listen_message}
+    
+    
+    Do I need to do anything?
+
+    
+    Explain why an action is required or why no action is required. Provide instructions on how to proceed if an action is required.
     """
 
     # 1. create RetrieveAssistantAgent instance named "assistant"
@@ -71,25 +82,25 @@ def main():
         max_consecutive_auto_reply=10,
         default_auto_reply="Reply `TERMINATE` if the task is done.",
         retrieve_config={
-            "task": "code",
+            "task": "qa",
             "docs_path": ["corpus/"],
             "custom_text_types": ["json"],
             "chunk_token_size": 2000,
             "model": config_list[0]["model"],
-            "client": chromadb.PersistentClient(path="/tmp/chromadb"),
+            "client": chromadb.PersistentClient(path="c:/Users/erics/OneDrive/Documents/GitHub/ambient-listener/tmp/chromadb"),
             "embedding_model": "all-mpnet-base-v2",
             "get_or_create": True,  # set to False if you don't want to reuse an existing collection, but you'll need to remove the collection manually
         },
         code_execution_config={
-                "work_dir": "autogen_code/",
+                "work_dir": "/",
                 "use_docker": False
             },
     )
-    assistant.reset()
+    itinerary_retrieval_assistant.reset()
     ragproxyagent.reset()
 
     # 3. initiate the chat
-    ragproxyagent.initiate_chat(assistant, clear_history=True, problem=message)
+    ragproxyagent.initiate_chat(itinerary_retrieval_assistant, clear_history=True, problem=initiating_message)
 
 
 if __name__ == "__main__":
