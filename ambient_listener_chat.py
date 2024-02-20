@@ -1,10 +1,13 @@
 import autogen
 from autogen.agentchat.contrib.retrieve_assistant_agent import RetrieveAssistantAgent
 from autogen.agentchat.contrib.retrieve_user_proxy_agent import RetrieveUserProxyAgent
+from autogen.agentchat.user_proxy_agent import UserProxyAgent
+from autogen.agentchat.assistant_agent import AssistantAgent
 from ambient_retrieve_user_proxy import AmbientRetrieveUserProxy
 import chromadb
 import os
 import datetime
+from typing import List
 
 config_list = autogen.config_list_from_json(
         env_or_file="OAI_CONFIG_LIST",
@@ -23,25 +26,102 @@ llm_config = {
     "temperature": 0,
 }
 
+chromadb_path = os.path.join(os.getcwd(), "/tmp/chromadb")
+
+def termination_msg_no_action(x):
+    return isinstance(x, dict) and (("NO ACTION REQUIRED" in str(x.get("content", ""))[:18]) or ("ACTION REQUIRED" in str(x.get("content", ""))[:15]))
+
+
 def termination_msg(x):
     return isinstance(x, dict) and "TERMINATE" == str(x.get("content", ""))[-9:].upper()
 
-# Make a list of the top level folders and file names in the reference_materials folder
-def get_reference_materials():
-    print("=========================================")
-    print("executing get_reference_materials.py from " + os.getcwd())
-    directory = "reference_materials/"
-    folders = []
-    files = []
-    for item in os.listdir(directory):
-        path = os.path.join(directory, item)
-        if os.path.isdir(path):
-            folders.append(directory + item)
-        else:
-            files.append(directory + item)
-    
-    return folders + files
 
+itinerary_retrieval_assistant = AssistantAgent(
+    name="itinerary_retrieval_agent",
+    system_message="You are a helpful assistant who has access to the user's calendar information.",
+    llm_config=llm_config,
+    description="Retrieve information about the user's itinerary.",
+)
+
+ragproxyagent = AmbientRetrieveUserProxy(
+    name="ragproxyagent",
+    is_termination_msg=termination_msg_no_action,
+    human_input_mode="NEVER",
+    max_consecutive_auto_reply=10,
+    default_auto_reply="Reply `TERMINATE` if the task is done.",
+    retrieve_config={
+        "task": "qa",
+        "docs_path": ["corpus/"],
+        "custom_text_types": ["json"],
+        "chunk_token_size": 2000,
+        "model": config_list[0]["model"],
+        "client": chromadb.PersistentClient(path=chromadb_path),
+        "embedding_model": "all-mpnet-base-v2",
+        "get_or_create": True,  # set to False if you don't want to reuse an existing collection, but you'll need to remove the collection manually
+        "update_context": False # do not request additional context from the user
+    },
+    code_execution_config={
+            "work_dir": "/",
+            "use_docker": False
+        },
+)
+
+communication_assistant = AssistantAgent(
+    name="communication_assistant",
+    human_input_mode="NEVER",
+    system_message="You are a knowledgable assistant who knows how best to communicate to the user via digital means depending on the circumstances. Review any actions that are suggested to the user and propose methods of notifying the user in real time to their phone.",
+    llm_config=llm_config,
+)
+
+# from https://microsoft.github.io/autogen/blog/2023/10/18/RetrieveChat#integrate-with-other-agents-in-a-group-chat. The description of the function will be used to 
+# determine when to call the retrival method
+def retrieve_itinerary_information(message: str, n_results=3):
+    """
+    Retrieve itinerary information for the user.
+    """
+    ragproxyagent.n_results = n_results  # Set the number of results to be retrieved.
+    # Check if we need to update the context.
+    ret_msg = ragproxyagent.generate_init_message(message, n_results=n_results)
+
+    # the `ret_msg`` will contain all context and the instructions for another agent 
+    # to continue the conversation based on the PROMPT variables in ambient_retrieve_user_proxy.py
+    return ret_msg if ret_msg else message
+
+os_operator_agent = UserProxyAgent(
+        human_input_mode="NEVER",
+        name="os_operator_agent",
+        is_termination_msg=termination_msg,
+        code_execution_config={
+            "work_dir": "/",
+            "use_docker": False
+        },
+        llm_config=llm_config,
+)
+
+def log_suggested_actions(announcement: str, suggested_actions: List[str]):
+    """
+    Save the suggested actions to a log file.
+    """
+    with open("suggested_actions.log", "a") as f:
+        f.write(f"{announcement}\n")
+        f.write(f"{suggested_actions}\n\n")
+
+os_operator_agent.register_function(
+    function_map={"log_suggested_actions": log_suggested_actions},
+)
+autogen.agentchat.register_function(
+    retrieve_itinerary_information,
+    caller=itinerary_retrieval_assistant,
+    executor=itinerary_retrieval_assistant,
+    description="Retrieve itinerary information for the user.",
+)
+
+autogen.agentchat.register_function(
+    log_suggested_actions,
+    caller=communication_assistant,
+    executor=os_operator_agent,
+    description="Record any actions suggested by the agents in the chat to create notifications to the user.",
+)
 
 def main():
     print("=========================================")
@@ -63,47 +143,30 @@ def main():
     {ambient_listen_message}
     
     
-    Do I need to do anything?
+    Use my itinerary data to determine if I need to take any actions.
 
     
     Explain why an action is required or why no action is required. Provide instructions on how to proceed if an action is required.
     """
 
-    # 1. create RetrieveAssistantAgent instance named "assistant"
-    itinerary_retrieval_assistant = RetrieveAssistantAgent(
-        name="itinerary_retrieval_agent",
-        system_message="You are a helpful assistant.",
-        llm_config=llm_config,
-    )
-    
-    ragproxyagent = AmbientRetrieveUserProxy(
-        name="ragproxyagent",
-        is_termination_msg=termination_msg,
-        human_input_mode="ALWAYS",
-        max_consecutive_auto_reply=10,
-        default_auto_reply="Reply `TERMINATE` if the task is done.",
-        retrieve_config={
-            "task": "qa",
-            "docs_path": ["corpus/"],
-            "custom_text_types": ["json"],
-            "chunk_token_size": 2000,
-            "model": config_list[0]["model"],
-            "client": chromadb.PersistentClient(path="c:/Users/erics/OneDrive/Documents/GitHub/ambient-listener/tmp/chromadb"),
-            "embedding_model": "all-mpnet-base-v2",
-            "get_or_create": True,  # set to False if you don't want to reuse an existing collection, but you'll need to remove the collection manually
-            "update_context": False # do not request additional context from the user
-        },
-        code_execution_config={
-                "work_dir": "/",
-                "use_docker": False
-            },
-    )
+    # 1. configure the agents
     itinerary_retrieval_assistant.reset()
     ragproxyagent.reset()
+    os_operator_agent.reset()
+
 
     # 3. initiate the chat
-    ragproxyagent.initiate_chat(itinerary_retrieval_assistant, clear_history=True, problem=initiating_message)
+    groupchat = autogen.GroupChat(
+        agents=[os_operator_agent, itinerary_retrieval_assistant, communication_assistant], messages=[], max_round=5
+    )
+    manager = autogen.GroupChatManager(groupchat=groupchat, llm_config=llm_config)
 
+    # Start chatting with the boss as this is the user proxy agent.
+    os_operator_agent.initiate_chat(
+        manager,
+        message=initiating_message,
+    )
+    
 
 if __name__ == "__main__":
     main()
