@@ -51,6 +51,7 @@ ragproxyagent = AmbientRetrieveUserProxy(
     default_auto_reply="Reply `TERMINATE` if the task is done.",
     retrieve_config={
         "task": "qa",
+        # TODO: "custom_prompt": i think we can pass a custom prompt here instad of wrapping the entire rag agent or using the qa task type
         "docs_path": ["corpus/"],
         "custom_text_types": ["json"],
         "chunk_token_size": 2000,
@@ -58,7 +59,7 @@ ragproxyagent = AmbientRetrieveUserProxy(
         "client": chromadb.PersistentClient(path=chromadb_path),
         "embedding_model": "all-mpnet-base-v2",
         "get_or_create": True,  # set to False if you don't want to reuse an existing collection, but you'll need to remove the collection manually
-        "update_context": False # do not request additional context from the user
+        "update_context": False # do not request additional context from the user,
     },
     code_execution_config={
             "work_dir": "/",
@@ -75,7 +76,7 @@ communication_assistant = AssistantAgent(
 
 # from https://microsoft.github.io/autogen/blog/2023/10/18/RetrieveChat#integrate-with-other-agents-in-a-group-chat. The description of the function will be used to 
 # determine when to call the retrival method
-def retrieve_itinerary_information(message: str, n_results=3):
+def retrieve_itinerary_information(message: str, n_results=4):
     """
     Retrieve itinerary information for the user.
     """
@@ -92,11 +93,12 @@ os_operator_agent = UserProxyAgent(
         name="os_operator_agent",
         is_termination_msg=termination_msg,
         code_execution_config={
-            "work_dir": "/",
+            "work_dir": "/logs",
             "use_docker": False
         },
         llm_config=llm_config,
 )
+
 
 def log_suggested_actions(announcement: str, suggested_actions: List[str]):
     """
@@ -106,9 +108,6 @@ def log_suggested_actions(announcement: str, suggested_actions: List[str]):
         f.write(f"{announcement}\n")
         f.write(f"{suggested_actions}\n\n")
 
-os_operator_agent.register_function(
-    function_map={"log_suggested_actions": log_suggested_actions},
-)
 autogen.agentchat.register_function(
     retrieve_itinerary_information,
     caller=itinerary_retrieval_assistant,
@@ -157,7 +156,7 @@ def main():
 
     # 3. initiate the chat
     groupchat = autogen.GroupChat(
-        agents=[os_operator_agent, itinerary_retrieval_assistant, communication_assistant], messages=[], max_round=5
+        agents=[os_operator_agent, itinerary_retrieval_assistant, communication_assistant], messages=[], max_round=10
     )
     manager = autogen.GroupChatManager(groupchat=groupchat, llm_config=llm_config)
 

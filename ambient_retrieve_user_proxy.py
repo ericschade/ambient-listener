@@ -54,7 +54,7 @@ If you can't answer the question with or without the current context, your reply
  ```
 
  If you can answer the question, your reply should be given in the following format:
- 
+
  'ACTION REQUIRED'
  ```
  explain in detail the steps that the user should take in order to meet the deadlines in their calendar.
@@ -64,11 +64,12 @@ User's question is: {input_question}
 
 Context is: {input_context}
 """
-
+# can maybe just pass a custom prompt instead of wrap the entire agent
 class AmbientRetrieveUserProxy(RetrieveUserProxyAgent):
     """(Experimental) Retrieve User Proxy agent, designed to solve a task with LLM.
 
-    RetrieveUserProxy is a subclass of RetrieveUserProxy configured with a default system message."""
+    RetrieveUserProxy is a subclass of RetrieveUserProxy configured with a default system message.
+    """
 
     def _generate_message(self, doc_contents, task="default"):
         if not doc_contents:
