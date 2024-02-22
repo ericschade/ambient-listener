@@ -16,12 +16,11 @@ A lifestyle app to assist in keeping an awareness of your environment.
 
 ## Introduction
 
-Welcome to ambient-listener! This app is designed to help you stay aware of your environment and make informed decisions. It provides real-time information about various environmental factors such as noise levels, air quality, and more.
+Welcome to ambient-listener! This app is designed to help you stay aware of your environment and make informed decisions. It listens to your environment and provides AI powered notifications and suggestions of actions to take.
 
 ## Prerequisites
 
 - `python 3.10` - autogen rag functionality requires some dependencies specific to py3.10
-- I think it requires rust
 
 
 
