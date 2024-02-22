@@ -47,9 +47,16 @@ To get started with ambient-listener, run the following command:
 
 `python ambient_listener_chat.py`
 
+You can add specific itinerary data to the `corpus/` directory
+
 ## Todo
 - conversation termination is a little awkward
 - get actual calendar data format. come up with strategy for fetching calendar data.
-  - maybe only get 1 month(+/- 2 weeks from current date)
+  - maybe only get 1 month(+/- 2 weeks from current date) from gCal API each time an announcement is detected.
+- rag optimization
+  - perform vector DB update vs recreation each time? will need to manage the chromadb storage
 - speech to text
+  - this is a whole technical challenge on its own
+  - determine if sound is noise or an announcement. train a speech -> text model on train, airport, etc loudspeaker.
 - actually send notifications somewhere
+  - use open ai tool API to call methods instead of just logging
