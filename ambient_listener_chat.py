@@ -14,7 +14,7 @@ config_list = autogen.config_list_from_json(
         file_location=".",
         filter_dict={
             "model": {
-                "gpt-4",
+                "gpt-3.5-turbo",
             }
         },
     )
