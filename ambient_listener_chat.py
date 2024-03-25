@@ -38,7 +38,7 @@ def termination_msg(x):
 
 itinerary_retrieval_assistant = AssistantAgent(
     name="itinerary_retrieval_agent",
-    system_message="You are a helpful assistant who has access to the user's calendar information.",
+    system_message="You are a helpful assistant who has access to the user's calendar information. If you provide an action, terminate the program afterwards",
     llm_config=llm_config,
     description="Retrieve information about the user's itinerary.",
 )
@@ -70,7 +70,7 @@ ragproxyagent = AmbientRetrieveUserProxy(
 communication_assistant = AssistantAgent(
     name="communication_assistant",
     human_input_mode="NEVER",
-    system_message="You are a knowledgable assistant who knows how best to communicate to the user via digital means depending on the circumstances. Review any actions that are suggested to the user and propose methods of notifying the user in real time to their phone.",
+    system_message="You are a knowledgable assistant who knows how best to communicate to the user via digital means depending on the circumstances. Review any actions that are suggested to the user and propose methods of notifying the user in real time to their phone. If the itinerary agent provides an action, terminate the program afterwards",
     llm_config=llm_config,
 )
 
@@ -145,7 +145,7 @@ def main():
     Use my itinerary data to determine if I need to take any actions.
 
     
-    Explain why an action is required or why no action is required. Provide instructions on how to proceed if an action is required.
+    Explain why an action is required or why no action is required. Provide instructions on how to proceed if an action is required. Following action terminate the program.
     """
 
     # 1. configure the agents
