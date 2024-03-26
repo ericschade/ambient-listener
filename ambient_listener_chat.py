@@ -16,6 +16,9 @@ from gtts import gTTS
 import speech_recognition as sr
 from pydub import AudioSegment
 from pydub.playback import play
+import os
+import tkinter as tk
+from tkinter import messagebox
 
 config_list = autogen.config_list_from_json(
         env_or_file="OAI_CONFIG_LIST",
@@ -42,7 +45,16 @@ def termination_msg_no_action(x):
 
 def termination_msg(x):
     return isinstance(x, dict) and "TERMINATE" == str(x.get("content", ""))[-9:].upper()
+    
+# Mac temporary slide in notification    
+def notify(title, text):
+    os.system("""
+              osascript -e 'display notification "{}" with title "{}"'
+              """.format(text, title))
 
+# Define a function to show pop-up alert across all platforms
+def show_popup(action):
+    messagebox.showinfo("Ambient Alert", action)
 
 itinerary_retrieval_assistant = AssistantAgent(
     name="itinerary_retrieval_agent",
@@ -189,7 +201,6 @@ def main():
         manager,
         message=initiating_message,
     )
-    
 
 if __name__ == "__main__":
-    main()
+    #main()
