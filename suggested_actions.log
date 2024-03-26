@@ -100,3 +100,33 @@ Flight to Bermuda delayed by 2 hours. Advised to check monitors, replan leisure 
 ACTION REQUIRED
 ['Prepare for the trip to Bermuda by ensuring all necessary documents and items are packed. Arrive at San Diego International Airport on time for your flight with ABC Airlines (flight number: ABC123) departing to BDA at 18:00. After arrival in Bermuda, take a taxi from BDA Airport to Hotel XYZ located at 123 Main Street. Confirm your booking with Hotel XYZ for a smooth check-in process.']
 
+Flight to Bermuda delayed by 2 hours.
+['Monitor the flight updates on the airport monitors for further notifications.']
+
+Flight delay for New York flight
+[]
+
+Flight delay to New York
+["Check if the user's itinerary needs to be updated due to the flight delay."]
+
+Flight delay to New York. Check for flight updates and plan accordingly.
+['Check flight details for updates', 'Contact the airline for the latest flight status']
+
+No announcement for a specific action.
+['ACTION REQUIRED', 'Check your itinerary for your next event, which is the trip to Bermuda scheduled for 2024-02-19 at 1:00 PM. Make sure you are prepared for your flight departure from San Diego International Airport to BDA, Bermuda.']
+
+The flight to Bermuda is delayed by 2 hours. The user's itinerary shows a trip to Bermuda scheduled for 1:00 PM - 2:00 PM on the same day as the announced delay. Possible actions to consider:
+['Check if any arrangements at Bermuda need to be rescheduled.']
+
+Flight delay 2 hours to Bermuda
+['ACTION REQUIRED - Inform the hotel in Bermuda about the flight delay and request a possible extension or adjustment to your reservation']
+
+Flight delay 2 hours to Bermuda
+['ACTION REQUIRED - Inform the hotel in Bermuda about the flight delay and request a possible extension or adjustment to your reservation']
+
+Flight delay to Bermuda
+['Inform Hotel XYZ', 'Check Transit Pickup', 'Update Calendar']
+
+Flight delayed by 2 hours to Bermuda.
+['Adjust connecting schedules or activities in Bermuda.', 'Notify Hotel XYZ about potential arrival time changes.', 'Reschedule activities planned for the day of arrival in Bermuda.']
+

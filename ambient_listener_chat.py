@@ -19,7 +19,13 @@ from pydub.playback import play
 import os
 import tkinter as tk
 from tkinter import messagebox
+import re
 
+
+# Define a function to show pop-up alert across all platforms
+def show_popup(action):
+    messagebox.showinfo("Ambient Alert", action)
+    
 config_list = autogen.config_list_from_json(
         env_or_file="OAI_CONFIG_LIST",
         file_location=".",
@@ -51,10 +57,6 @@ def notify(title, text):
     os.system("""
               osascript -e 'display notification "{}" with title "{}"'
               """.format(text, title))
-
-# Define a function to show pop-up alert across all platforms
-def show_popup(action):
-    messagebox.showinfo("Ambient Alert", action)
 
 itinerary_retrieval_assistant = AssistantAgent(
     name="itinerary_retrieval_agent",
@@ -122,11 +124,19 @@ os_operator_agent = UserProxyAgent(
 
 def log_suggested_actions(announcement: str, suggested_actions: List[str]):
     """
-    Save the suggested actions to a log file.
+    Save the suggested actions to a log file and display a pop-up if ACTION REQUIRED.
     """
     with open("suggested_actions.log", "a") as f:
         f.write(f"{announcement}\n")
         f.write(f"{suggested_actions}\n\n")
+
+    # Check if any of the suggested actions contain "ACTION REQUIRED"
+    action_required = any(re.search(r'ACTION REQUIRED', action, re.IGNORECASE) for action in suggested_actions) # Searching for Action Required is not working. Run without if statement below for popup to work.
+
+    if action_required:
+        # Call show_popup with the suggested actions if an action is required
+        for action in suggested_actions:
+            show_popup(action)
 
 autogen.agentchat.register_function(
     retrieve_itinerary_information,
@@ -202,5 +212,8 @@ def main():
         message=initiating_message,
     )
 
+    # Start the tkinter main loop
+    root = tk.Tk()
+
 if __name__ == "__main__":
-    #main()
+    main()
