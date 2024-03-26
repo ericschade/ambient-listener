@@ -8,6 +8,14 @@ import chromadb
 import os
 import datetime
 from typing import List
+import os
+import time
+import pyaudio
+import playsound
+from gtts import gTTS
+import speech_recognition as sr
+from pydub import AudioSegment
+from pydub.playback import play
 
 config_list = autogen.config_list_from_json(
         env_or_file="OAI_CONFIG_LIST",
@@ -38,9 +46,9 @@ def termination_msg(x):
 
 itinerary_retrieval_assistant = AssistantAgent(
     name="itinerary_retrieval_agent",
-    system_message="You are a helpful assistant who has access to the user's calendar information. If you provide an action, terminate the program afterwards",
+    system_message="You are a helpful assistant who has access to the user's calendar and travel plan information. After you provide an action recommendation, terminate the program.",
     llm_config=llm_config,
-    description="Retrieve information about the user's itinerary.",
+    description="Retrieve information about the user's itinerary",
 )
 
 ragproxyagent = AmbientRetrieveUserProxy(
@@ -122,18 +130,34 @@ autogen.agentchat.register_function(
     description="Record any actions suggested by the agents in the chat to create notifications to the user.",
 )
 
+lang = 'en'
+def get_audio():
+    recognizer = sr.Recognizer()  # create an instance of Recognizer
+    with sr.Microphone() as source:
+        print("Speak now:")
+        audio = recognizer.listen(source)
+
+        try:
+            input_text = recognizer.recognize_google(audio)
+            print("You said:", input_text)
+            return input_text
+        except sr.UnknownValueError:
+            print("I couldn't understand you")
+            return ""
+
 def main():
     print("=========================================")
-
+    
     now = datetime.datetime.now()
     current_date = now.strftime("%Y-%m-%d")
     current_time = now.strftime("%H:%M:%S")
 
     current_location = "the mall"
-    ambient_listen_message = """
-    Attention all passengers, the flight to Bermuda has been delayed by 2 hours.
-      We apologize for the inconvenience. Please check the monitors for updates.
-      """
+    input_text = get_audio()  # Call get_audio to get the user's input
+    #  Attention all passengers, the flight to Bermuda has been delayed by 2 hours.
+    #  We apologize for the inconvenience. Please check the monitors for updates.
+        
+    ambient_listen_message = input_text
 
     initiating_message = f"""
     It is {current_time} on {current_date} and I am at {current_location}. I just heard an announcement over a loudspeaker saying the following:
