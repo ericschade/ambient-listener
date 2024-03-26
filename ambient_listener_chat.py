@@ -23,7 +23,7 @@ llm_config = {
     "timeout": 60,
     "cache_seed": 42,
     "config_list": config_list,
-    "temperature": 0,
+    "temperature": 1.5,
 }
 
 chromadb_path = os.path.join(os.getcwd(), "/tmp/chromadb")
