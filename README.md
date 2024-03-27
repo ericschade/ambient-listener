@@ -22,8 +22,6 @@ Welcome to ambient-listener! This app is designed to help you stay aware of your
 
 - `python 3.10` - autogen rag functionality requires some dependencies specific to py3.10
 
-
-
 ## Installation
 
 To use ambient-listener, follow these steps:

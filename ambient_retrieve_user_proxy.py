@@ -1,5 +1,6 @@
 import autogen
 from autogen.agentchat.contrib.retrieve_user_proxy_agent import RetrieveUserProxyAgent
+from termcolor import colored
 
 PROMPT_DEFAULT = """You're a retrieve augmented chatbot. You answer user's questions based on your own knowledge and the
 context provided by the user. You should follow the following steps to answer a question:

@@ -8,13 +8,30 @@ import chromadb
 import os
 import datetime
 from typing import List
+import os
+import time
+import pyaudio
+import playsound
+from gtts import gTTS
+import speech_recognition as sr
+from pydub import AudioSegment
+from pydub.playback import play
+import os
+import tkinter as tk
+from tkinter import messagebox
+import re
 
+
+# Define a function to show pop-up alert across all platforms
+def show_popup(action):
+    messagebox.showinfo("Ambient Alert", action)
+    
 config_list = autogen.config_list_from_json(
         env_or_file="OAI_CONFIG_LIST",
         file_location=".",
         filter_dict={
             "model": {
-                "gpt-4",
+                "gpt-3.5-turbo",
             }
         },
     )
@@ -23,7 +40,7 @@ llm_config = {
     "timeout": 60,
     "cache_seed": 42,
     "config_list": config_list,
-    "temperature": 0,
+    "temperature": 1.5,
 }
 
 chromadb_path = os.path.join(os.getcwd(), "/tmp/chromadb")
@@ -34,13 +51,18 @@ def termination_msg_no_action(x):
 
 def termination_msg(x):
     return isinstance(x, dict) and "TERMINATE" == str(x.get("content", ""))[-9:].upper()
-
+    
+# Mac temporary slide in notification    
+def notify(title, text):
+    os.system("""
+              osascript -e 'display notification "{}" with title "{}"'
+              """.format(text, title))
 
 itinerary_retrieval_assistant = AssistantAgent(
     name="itinerary_retrieval_agent",
-    system_message="You are a helpful assistant who has access to the user's calendar information.",
+    system_message="You are a helpful assistant who has access to the user's calendar and travel plan information. After you provide an action recommendation, terminate the program.",
     llm_config=llm_config,
-    description="Retrieve information about the user's itinerary.",
+    description="Retrieve information about the user's itinerary",
 )
 
 ragproxyagent = AmbientRetrieveUserProxy(
@@ -70,7 +92,7 @@ ragproxyagent = AmbientRetrieveUserProxy(
 communication_assistant = AssistantAgent(
     name="communication_assistant",
     human_input_mode="NEVER",
-    system_message="You are a knowledgable assistant who knows how best to communicate to the user via digital means depending on the circumstances. Review any actions that are suggested to the user and propose methods of notifying the user in real time to their phone.",
+    system_message="You are a knowledgable assistant who knows how best to communicate to the user via digital means depending on the circumstances. Review any actions that are suggested to the user and propose methods of notifying the user in real time to their phone. If the itinerary agent provides an action, terminate the program afterwards",
     llm_config=llm_config,
 )
 
@@ -102,11 +124,19 @@ os_operator_agent = UserProxyAgent(
 
 def log_suggested_actions(announcement: str, suggested_actions: List[str]):
     """
-    Save the suggested actions to a log file.
+    Save the suggested actions to a log file and display a pop-up if ACTION REQUIRED.
     """
     with open("suggested_actions.log", "a") as f:
         f.write(f"{announcement}\n")
         f.write(f"{suggested_actions}\n\n")
+
+    # Check if any of the suggested actions contain "ACTION REQUIRED"
+    action_required = any(re.search(r'ACTION REQUIRED', action, re.IGNORECASE) for action in suggested_actions) # Searching for Action Required is not working. Run without if statement below for popup to work.
+
+    if action_required:
+        # Call show_popup with the suggested actions if an action is required
+        for action in suggested_actions:
+            show_popup(action)
 
 autogen.agentchat.register_function(
     retrieve_itinerary_information,
@@ -122,18 +152,34 @@ autogen.agentchat.register_function(
     description="Record any actions suggested by the agents in the chat to create notifications to the user.",
 )
 
+lang = 'en'
+def get_audio():
+    recognizer = sr.Recognizer()  # create an instance of Recognizer
+    with sr.Microphone() as source:
+        print("Speak now:")
+        audio = recognizer.listen(source)
+
+        try:
+            input_text = recognizer.recognize_google(audio)
+            print("You said:", input_text)
+            return input_text
+        except sr.UnknownValueError:
+            print("I couldn't understand you")
+            return ""
+
 def main():
     print("=========================================")
-
+    
     now = datetime.datetime.now()
     current_date = now.strftime("%Y-%m-%d")
     current_time = now.strftime("%H:%M:%S")
 
     current_location = "the mall"
-    ambient_listen_message = """
-    Attention all passengers, the flight to Bermuda has been delayed by 2 hours.
-      We apologize for the inconvenience. Please check the monitors for updates.
-      """
+    input_text = get_audio()  # Call get_audio to get the user's input
+    #  Attention all passengers, the flight to Bermuda has been delayed by 2 hours.
+    #  We apologize for the inconvenience. Please check the monitors for updates.
+        
+    ambient_listen_message = input_text
 
     initiating_message = f"""
     It is {current_time} on {current_date} and I am at {current_location}. I just heard an announcement over a loudspeaker saying the following:
@@ -145,7 +191,7 @@ def main():
     Use my itinerary data to determine if I need to take any actions.
 
     
-    Explain why an action is required or why no action is required. Provide instructions on how to proceed if an action is required.
+    Explain why an action is required or why no action is required. Provide instructions on how to proceed if an action is required. Following action terminate the program.
     """
 
     # 1. configure the agents
@@ -165,7 +211,9 @@ def main():
         manager,
         message=initiating_message,
     )
-    
+
+    # Start the tkinter main loop
+    root = tk.Tk()
 
 if __name__ == "__main__":
     main()
